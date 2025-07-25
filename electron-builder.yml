@@ -1,0 +1,48 @@
+appId: com.electron.api-key-manager
+productName: API Key Manager
+directories:
+  buildResources: build
+  output: release
+files:
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!{.eslintignore,.eslintrc.js,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md}'
+  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  - '!{README.md,LICENSE}'
+asarUnpack:
+  - resources/**
+mac:
+  icon: build/icon.icns
+  category: public.app-category.productivity
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+  extendInfo:
+    - NSCameraUsageDescription: Application does not access the camera.
+    - NSMicrophoneUsageDescription: Application does not access the microphone.
+    - NSDocumentsFolderUsageDescription: Application may access documents for importing/exporting API keys.
+    - NSDownloadsFolderUsageDescription: Application may access downloads for importing/exporting API keys.
+    - NSUserTrackingUsageDescription: Application does not track users.
+dmg:
+  artifactName: ${name}-${version}-${arch}.${ext}
+  title: ${productName} ${version}
+  icon: build/icon.icns
+  iconSize: 160
+  contents:
+    - x: 180
+      y: 170
+      type: file
+    - x: 480
+      y: 170
+      type: link
+      path: /Applications
+publish:
+  provider: github
+  owner: yourusername
+  repo: electron-api-key-manager 

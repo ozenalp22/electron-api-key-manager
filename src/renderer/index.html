@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';">
+  <title>API Key Manager</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #f5f5f7;
+      color: #1d1d1f;
+      line-height: 1.6;
+      overflow: hidden;
+    }
+
+    .app-container {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    .sidebar {
+      width: 300px;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .app-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1d1d1f;
+      margin-bottom: 8px;
+    }
+
+    .app-subtitle {
+      font-size: 14px;
+      color: #86868b;
+    }
+
+    .search-container {
+      padding: 20px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      font-size: 14px;
+      background: rgba(255, 255, 255, 0.8);
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .search-input:focus {
+      border-color: #007aff;
+    }
+
+    .api-keys-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .api-key-item {
+      padding: 16px;
+      margin: 8px 0;
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .api-key-item:hover {
+      background: rgba(255, 255, 255, 1);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .api-key-item.selected {
+      border-color: #007aff;
+      background: rgba(0, 122, 255, 0.1);
+    }
+
+    .api-key-name {
+      font-weight: 600;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .api-key-platform {
+      font-size: 14px;
+      color: #86868b;
+      margin-bottom: 8px;
+    }
+
+    .api-key-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .tag {
+      padding: 2px 8px;
+      background: rgba(0, 122, 255, 0.1);
+      color: #007aff;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #fafafa;
+    }
+
+    .toolbar {
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .toolbar-title {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+
+    .btn-primary {
+      background: #007aff;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #0051d5;
+    }
+
+    .btn-secondary {
+      background: rgba(0, 0, 0, 0.1);
+      color: #1d1d1f;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(0, 0, 0, 0.15);
+    }
+
+    .content-area {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+    }
+
+    .empty-state-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+      opacity: 0.3;
+    }
+
+    .empty-state-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .empty-state-subtitle {
+      font-size: 16px;
+      color: #86868b;
+      margin-bottom: 20px;
+    }
+
+    .key-details {
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .key-details-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+    }
+
+    .key-info h2 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .key-info .platform {
+      font-size: 16px;
+      color: #86868b;
+      margin-bottom: 8px;
+    }
+
+    .key-info .description {
+      font-size: 14px;
+      color: #515154;
+    }
+
+    .key-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .key-field {
+      margin-bottom: 20px;
+    }
+
+    .key-field label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: #1d1d1f;
+    }
+
+    .key-field-value {
+      padding: 12px 16px;
+      background: rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 14px;
+      word-break: break-all;
+      position: relative;
+    }
+
+    .copy-button {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(0, 122, 255, 0.1);
+      color: #007aff;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .copy-button:hover {
+      background: rgba(0, 122, 255, 0.2);
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(0, 122, 255, 0.3);
+      border-top: 3px solid #007aff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 16px;
+      background: #34c759;
+      color: white;
+      border-radius: 8px;
+      font-weight: 500;
+      z-index: 1000;
+      transform: translateX(400px);
+      transition: transform 0.3s ease;
+    }
+
+    .notification.show {
+      transform: translateX(0);
+    }
+
+    .notification.error {
+      background: #ff3b30;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #1c1c1e;
+        color: #ffffff;
+      }
+
+      .sidebar {
+        background: rgba(28, 28, 30, 0.8);
+        border-right-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .search-input {
+        background: rgba(44, 44, 46, 0.8);
+        color: #ffffff;
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .api-key-item {
+        background: rgba(44, 44, 46, 0.8);
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .api-key-item:hover {
+        background: rgba(44, 44, 46, 1);
+      }
+
+      .main-content {
+        background: #000000;
+      }
+
+      .toolbar {
+        background: rgba(28, 28, 30, 0.8);
+        border-bottom-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .key-details {
+        background: rgba(44, 44, 46, 0.8);
+      }
+
+      .key-field-value {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h1 class="app-title">API Keys</h1>
+        <p class="app-subtitle">Secure key management</p>
+      </div>
+      
+      <div class="search-container">
+        <input type="text" class="search-input" placeholder="Search API keys..." id="searchInput">
+      </div>
+      
+      <div class="api-keys-list" id="apiKeysList">
+        <!-- API keys will be loaded here -->
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="toolbar">
+        <h2 class="toolbar-title" id="toolbarTitle">API Key Manager</h2>
+        <div class="toolbar-actions">
+          <button class="btn btn-secondary" id="exportBtn">Export</button>
+          <button class="btn btn-primary" id="newKeyBtn">New Key</button>
+        </div>
+      </div>
+      
+      <div class="content-area" id="contentArea">
+        <div class="empty-state">
+          <div class="empty-state-icon">🔐</div>
+          <h3 class="empty-state-title">No API Keys</h3>
+          <p class="empty-state-subtitle">Add your first API key to get started</p>
+          <button class="btn btn-primary" id="addFirstKeyBtn">Add API Key</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification -->
+  <div class="notification" id="notification"></div>
+
+  <script src="./src/app.js"></script>
+</body>
+</html> 
