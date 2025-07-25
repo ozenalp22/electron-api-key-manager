@@ -1,17 +1,22 @@
 import { app, BrowserWindow, ipcMain, Menu, dialog, systemPreferences } from 'electron'
 import { join } from 'node:path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import Store from 'electron-store'
 import * as keytar from 'keytar'
 
-// Initialize secure store for app preferences (not for API keys)
-const store = new Store({
-  name: 'app-preferences',
-  defaults: {
-    windowBounds: { width: 1200, height: 800 },
-    theme: 'system'
-  }
-})
+// Store will be initialized async
+let store: any
+
+// Initialize store with dynamic import
+async function initializeStore() {
+  const Store = await import('electron-store')
+  store = new Store.default({
+    name: 'app-preferences',
+    defaults: {
+      windowBounds: { width: 1200, height: 800 },
+      theme: 'system'
+    }
+  })
+}
 
 let mainWindow: BrowserWindow
 
@@ -312,7 +317,10 @@ function setupMenu(): void {
 }
 
 // App event handlers
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  // Initialize store first
+  await initializeStore()
+  
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron.api-key-manager')
 

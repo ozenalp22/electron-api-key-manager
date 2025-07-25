@@ -2,8 +2,8 @@
   "extends": "@electron-toolkit/tsconfig/tsconfig.json",
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "module": "ESNext", 
+    "moduleResolution": "node",
     "allowImportingTsExtensions": true,
     "strict": true,
     "noEmit": true,
