@@ -108,9 +108,33 @@ const electronAPI = {
     isValidAPIKey: (key: string, platform?: string) => {
       if (!key || key.trim().length === 0) return false
       
-      // Basic validation - can be extended for platform-specific formats
-      const minLength = platform === 'github' ? 40 : 10
-      return key.trim().length >= minLength
+      // More flexible validation - just check for reasonable length
+      const trimmedKey = key.trim()
+      
+      // Platform-specific validation (optional)
+      if (platform) {
+        const platformLower = platform.toLowerCase()
+        switch (platformLower) {
+          case 'github':
+            // GitHub tokens can be classic (40 chars) or fine-grained (variable length)
+            return trimmedKey.length >= 20
+          case 'openai':
+            // OpenAI keys start with 'sk-' and are ~51 chars
+            return trimmedKey.length >= 20
+          case 'stripe':
+            // Stripe keys start with 'sk_' or 'pk_'
+            return trimmedKey.length >= 20
+          case 'aws':
+            // AWS access keys are 20 chars, secret keys are 40 chars
+            return trimmedKey.length >= 16
+          default:
+            // General validation for other platforms
+            return trimmedKey.length >= 8
+        }
+      }
+      
+      // Default: just check for minimum reasonable length
+      return trimmedKey.length >= 8
     },
     
     formatDate: (dateString: string) => {
